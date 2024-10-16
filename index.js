@@ -79,10 +79,65 @@ const SLOTS = {
 
 const VERSION = "3.35.41", CELL_VOLUME = 16 * 16 * 16;
 const DEG2RAD = Math.PI / 180, RAD2DEG = 180 / Math.PI;
+const COLOR_REGEX = /\\#[A-Za-z0-9]+\\/i;
+const COLOR_PALETTE = {
+	"#AA0000": "\u00a7a",
+	"#FF5555": "\u00A7c",
+	"#FFAA00": "\u00A76",
+	"#FFFF55": "\u00A7e",
+	"#00AA00": "\u00A72",
+	"#55FF55": "\u00A7a",
+	"#55FFFF": "\u00A7b",
+	"#00AAAA": "\u00A73",
+	"#0000AA": "\u00A71",
+	"#5555FF": "\u00A79",
+	"#FF55FF": "\u00A7d",
+	"#AA00AA": "\u00A75",
+	"#FFFFFF": "\u00A7f",
+	"#AAAAAA": "\u00A77",
+	"#555555": "\u00A78",
+	"#000000": "\u00A70"
+};
+
+function hexToRgb(hex) {
+    const bigint = parseInt(hex.slice(1), 16);
+    return {
+        r: (bigint >> 16) & 255,
+        g: (bigint >> 8) & 255,
+        b: bigint & 255
+    };
+}
+
+function colorDistance(color1, color2) {
+    const rgb1 = hexToRgb(color1);
+    const rgb2 = hexToRgb(color2);
+    return Math.sqrt(
+        Math.pow(rgb1.r - rgb2.r, 2) +
+        Math.pow(rgb1.g - rgb2.g, 2) +
+        Math.pow(rgb1.b - rgb2.b, 2)
+    );
+}
+
+function findClosestColor(hex) {
+    let closestColor = null;
+    let closestDistance = Infinity;
+
+    for (const color in COLOR_PALETTE) {
+        const distance = colorDistance(hex, color);
+        if (distance < closestDistance) {
+            closestDistance = distance;
+            closestColor = color;
+        }
+    }
+
+    return COLOR_PALETTE[closestColor];
+}
 
 function translateText(text) {
 	for (const [code, color] of Object.entries(COLOR_CODES)) text = text.replaceAll(code, color);
-	return text;
+	return text.replace(COLOR_REGEX, (match) => {
+        return findClosestColor(match.replaceAll("\\",''));
+    });
 }
 
 function convertServerPos(pos) {
